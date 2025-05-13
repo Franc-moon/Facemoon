@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FaceLike - Générateur</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(145deg, #8e24aa, #fdd835);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #2c2c2c;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      width: 350px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      display: none;
+      animation: fadeIn 1s ease-in;
+    }
+    .active {
+      display: block;
+    }
+    h2 {
+      color: #d32f2f;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 15px;
+    }
+    button {
+      padding: 12px;
+      width: 100%;
+      background: white;
+      color: #2c2c2c;
+      font-weight: bold;
+      border: 2px solid #8e24aa;
+      border-radius: 8px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #fdd835;
+      color: #8e24aa;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .like-count {
+      color: #d32f2f;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .like-icon {
+      font-size: 30px;
+      color: #d32f2f;
+      animation: fly 0.8s linear infinite;
+    }
+    @keyframes fly {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    .slider-box {
+      margin-top: 15px;
+      text-align: left;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+    #validateBtn:disabled {
+      background: #ccc;
+      border-color: #ccc;
+      cursor: not-allowed;
+    }
+    #successMessage {
+      font-size: 16px;
+      font-weight: bold;
+      color: green;
+      margin-top: 15px;
+    }
+
+    /* Splash Screen */
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #8e24aa, #fdd835);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #splash h1 {
+      font-size: 48px;
+      color: white;
+      text-shadow: 2px 2px 10px rgba(0,0,0,0.4);
+      animation: fadeIn 1s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Écran d'intro -->
+  <div id="splash">
+    <h1>FaceLike</h1>
+  </div>
+
+  <!-- Écran 1 -->
+  <div id="welcome" class="container">
+    <h2>Bienvenue dans FaceLike</h2>
+    <p>Une expérience puissante et stylée pour simuler des likes Facebook.</p>
+    <button onclick="goToTerms()">Continuer</button>
+  </div>
+
+  <!-- Écran 2 -->
+  <div id="terms" class="container">
+    <h2>Conditions d'utilisation</h2>
+    <p>En utilisant FaceLike, vous acceptez nos conditions fictives et autorisez la simulation d'accès à votre publication Facebook.</p>
+    <input type="checkbox" id="agree" /> J'accepte les conditions et autorisations<br/>
+
+    <div class="slider-box">
+      <label for="humanCheck">Glissez pour prouver que vous êtes humain :</label>
+      <input type="range" id="humanCheck" min="0" max="100" value="0" />
+    </div>
+
+    <button id="validateBtn" onclick="verify()" disabled>Valider</button>
+  </div>
+
+  <!-- Écran 3 -->
+  <div id="generator" class="container">
+    <h2>FaceLike - Générateur de Likes</h2>
+    <input type="url" id="postLink" placeholder="Lien de la publication Facebook" />
+    <select id="likeChoice">
+      <option value="500">500 Likes</option>
+      <option value="1000">1000 Likes</option>
+      <option value="1500">1500 Likes</option>
+    </select>
+    <button onclick="generate()">Générer des Likes</button>
+
+    <div id="loading" style="display:none;">
+      <p>Analyse en cours...</p>
+      <div class="like-icon">👍</div>
+    </div>
+
+    <div id="result" style="display:none;">
+      <p id="postDisplay"></p>
+      <div class="like-count">Likes : <span id="likeCounter">0</span></div>
+      <div id="successMessage" style="display:none;">Vos likes ont été envoyés avec succès !</div>
+      <button id="returnBtn" onclick="goHome()" style="display:none;">Retour à l'accueil</button>
+    </div>
+  </div>
+
+  <script>
+    // Splash screen timeout
+    window.onload = () => {
+      setTimeout(() => {
+        document.getElementById("splash").style.display = "none";
+        document.getElementById("welcome").classList.add("active");
+      }, 5000);
+    };
+
+    function goToTerms() {
+      document.getElementById("welcome").classList.remove("active");
+      document.getElementById("terms").classList.add("active");
+    }
+
+    document.getElementById("humanCheck").addEventListener("input", function () {
+      const btn = document.getElementById("validateBtn");
+      btn.disabled = !(this.value >= 100);
+    });
+
+    function verify() {
+      if (!document.getElementById("agree").checked) {
+        alert("Vous devez accepter les conditions pour continuer.");
+        return;
+      }
+      document.getElementById("terms").classList.remove("active");
+      document.getElementById("generator").classList.add("active");
+    }
+
+    function generate() {
+      const postLink = document.getElementById("postLink").value.trim();
+      const likeTarget = parseInt(document.getElementById("likeChoice").value);
+      const likeCounter = document.getElementById("likeCounter");
+
+      if (!postLink || !postLink.startsWith("http")) {
+        alert("Lien invalide !");
+        return;
+      }
+
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("result").style.display = "none";
+      likeCounter.textContent = "0";
+      document.getElementById("postDisplay").textContent = "";
+
+      setTimeout(() => {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("result").style.display = "block";
+        document.getElementById("postDisplay").textContent = "Publication : " + postLink;
+
+        let count = 0;
+        const interval = setInterval(() => {
+          count += Math.floor(Math.random() * 20) + 10;
+          likeCounter.textContent = count;
+          if (count >= likeTarget) {
+            clearInterval(interval);
+            likeCounter.parentElement.style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+            document.getElementById("returnBtn").style.display = "block";
+          }
+        }, 80);
+      }, 3000);
+    }
+
+    function goHome() {
+      document.getElementById("generator").classList.remove("active");
+      document.getElementById("welcome").classList.add("active");
+      document.getElementById("likeCounter").textContent = "0";
+      document.getElementById("likeCounter").parentElement.style.display = "block";
+      document.getElementById("successMessage").style.display = "none";
+      document.getElementById("returnBtn").style.display = "none";
+      document.getElementById("postLink").value = "";
+    }
+  </script>
+</body>
+</html>
